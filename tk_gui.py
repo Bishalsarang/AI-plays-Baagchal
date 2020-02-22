@@ -17,7 +17,7 @@ graphic_board = [
 
 # Place tiger at corners
 grid[0][0] = grid[0][4] = grid[4][0] = grid[4][4] = 'T'
-grid[0][1] = grid[1][4] = grid[4][3] = grid[4][1] = 'G'
+# grid[0][1] = grid[1][4] = grid[4][3] = grid[4][1] = 'G'
 
 
 
@@ -28,7 +28,8 @@ move_from = Move(None, None)
 move_to = Move(None, None)
 selected = None
 current_turn = 'Goat'
-
+goats_in_hand = 20
+goats_killed = 0
 
 def switch_turn():
     global current_turn
@@ -47,7 +48,7 @@ def graphics_coordinates_to_index(x, y):
 
 def onObjectClick(event):
 
-    global move_from, move_to, object_to_be_moved, selected, grid, current_turn
+    global move_from, move_to, object_to_be_moved, selected, grid, current_turn, goats_in_hand
     # print(type(event.widget))
     print('Clicked', event.x, event.y, event.widget)
     obj = event.widget.find_closest(event.x, event.y, halo=5)
@@ -64,85 +65,148 @@ def onObjectClick(event):
         if object_to_be_moved_tag.startswith("blank"):
             object_to_be_moved_tag = "blank"
 
-    print(clicked_object_tag)
-    if clicked_object_tag.startswith(current_turn[0].lower()) and move_from == (None, None):
-        move_from = Move(*canv.coords(obj))
 
-        object_to_be_moved = obj
-        selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green", width=4, tag="selected")
+    if current_turn == "Goat":
+        # If goat is in hand
+        if goats_in_hand:
+            x, y = Move(*canv.coords(obj))
+            row_1, col_1 = graphics_coordinates_to_index(x, y)
+            if grid[row_1][col_1] == '_':
+                goats_in_hand -= 1
 
-    # Move is possible
-    elif object_to_be_moved_tag != "blank" and move_to == (None, None):
-        move_to = Move(*canv.coords(obj))
+                canv.delete(canv.find_closest(x, y, halo=5))
+                goat = canv.create_image(x, y, image=goat_img, anchor=NW,
+                                            tag="goat")
 
-        if move_from != move_to:
-            # delete the target object
-            canv.delete(canv.find_closest(move_to.x, move_to.y, halo=5))
+                grid[row_1][col_1] = 'G'
+                canv.tag_bind(goat, '<Button-1>', onObjectClick)
+                canv.update()
+                switch_turn()
+                turn_label.configure(text=f"Turn: {current_turn}")
+
+                goats_in_hand_label.configure(text=f"Goats in hand: {goats_in_hand}")
+                # turn_label.configure(text=f"Turn: {current_turn}")
+
+        else:
+
+            if clicked_object_tag.startswith(current_turn[0].lower()) and move_from == (None, None):
+                move_from = Move(*canv.coords(obj))
+
+                object_to_be_moved = obj
+                selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green", width=4, tag="selected")
+
+            # Move is possible
+            elif object_to_be_moved_tag != "blank" and move_to == (None, None):
+                move_to = Move(*canv.coords(obj))
+
+                if move_from != move_to:
+                    # delete the target object
+                    canv.delete(canv.find_closest(move_to.x, move_to.y, halo=5))
+                    # delete the selected boc
+                    canv.delete(selected)
+
+                    row_1, col_1 = graphics_coordinates_to_index(*move_from)
+                    row_2, col_2 = graphics_coordinates_to_index(*move_to)
+
+                    if grid[row_2][col_2] == '_':
+                        if move_from.x == move_to.x and move_from.y != move_to.y:
+                            # Up ki down
+                            canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
+
+                        elif move_from.y == move_to.y and move_to.x != move_to.y:
+                            # Left or right
+                            canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
+                        else:
+                            # Move diagonally
+                            canv.move(object_to_be_moved, (move_to.x - move_from.x), (move_to.y - move_from.y))
+
+                        grid[row_1][col_1] = '_'
+                        grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
+                        print(grid)
+                        blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img, anchor=NW, tag="blank")
+                        canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
+                        canv.update()
+                        print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
+                        switch_turn()
+                        turn_label.configure(text=f"Turn: {current_turn}")
+
+                # delete the selected boc
+                canv.delete(selected)
+                move_from = Move(None, None)
+                move_to = Move(None, None)
+                object_to_be_moved = None
+                selected = None
+
+                root.after(100, draw_board(grid))
+            else:
+                # From and to same
+                canv.delete(selected)
+                move_from = Move(None, None)
+                move_to = Move(None, None)
+                object_to_be_moved = None
+                selected = None
+    elif current_turn == "Tiger":
+
+        if clicked_object_tag.startswith(current_turn[0].lower()) and move_from == (None, None):
+            move_from = Move(*canv.coords(obj))
+
+            object_to_be_moved = obj
+            selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green",
+                                             width=4, tag="selected")
+
+        # Move is possible
+        elif object_to_be_moved_tag != "blank" and move_to == (None, None):
+            move_to = Move(*canv.coords(obj))
+
+            if move_from != move_to:
+                # delete the target object
+                canv.delete(canv.find_closest(move_to.x, move_to.y, halo=5))
+                # delete the selected boc
+                canv.delete(selected)
+
+                row_1, col_1 = graphics_coordinates_to_index(*move_from)
+                row_2, col_2 = graphics_coordinates_to_index(*move_to)
+
+                if grid[row_2][col_2] == '_':
+                    if move_from.x == move_to.x and move_from.y != move_to.y:
+                        # Up ki down
+                        canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
+
+                    elif move_from.y == move_to.y and move_to.x != move_to.y:
+                        # Left or right
+                        canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
+                    else:
+                        # Move diagonally
+                        canv.move(object_to_be_moved, (move_to.x - move_from.x),
+                                  (move_to.y - move_from.y))
+
+                    grid[row_1][col_1] = '_'
+                    grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
+                    print(grid)
+                    blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img,
+                                                anchor=NW, tag="blank")
+                    canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
+                    canv.update()
+                    print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
+                    switch_turn()
+                    turn_label.configure(text=f"Turn: {current_turn}")
+
             # delete the selected boc
             canv.delete(selected)
+            move_from = Move(None, None)
+            move_to = Move(None, None)
+            object_to_be_moved = None
+            selected = None
 
-            row_1, col_1 = graphics_coordinates_to_index(*move_from)
-            row_2, col_2 = graphics_coordinates_to_index(*move_to)
+            root.after(100, draw_board(grid))
+        else:
+            # From and to same
+            canv.delete(selected)
+            move_from = Move(None, None)
+            move_to = Move(None, None)
+            object_to_be_moved = None
+            selected = None
 
-            if grid[row_2][col_2] == '_':
-                if move_from.x == move_to.x and move_from.y != move_to.y:
-                    # Up ki down
-                    canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
-
-                elif move_from.y == move_to.y and move_to.x != move_to.y:
-                    # Left or right
-                    canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
-                else:
-                    # Move diagonally
-                    canv.move(object_to_be_moved, (move_to.x - move_from.x), (move_to.y - move_from.y))
-
-                grid[row_1][col_1] = '_'
-                grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
-                print(grid)
-                blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img, anchor=NW, tag="blank")
-                canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
-                canv.update()
-                print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
-                switch_turn()
-                turn.configure(text=current_turn)
-
-        # delete the selected boc
-        canv.delete(selected)
-        move_from = Move(None, None)
-        move_to = Move(None, None)
-        object_to_be_moved = None
-        selected = None
-
-        root.after(100, draw_board(grid))
-    else:
-        # From and to same
-        canv.delete(selected)
-        move_from = Move(None, None)
-        move_to = Move(None, None)
-        object_to_be_moved = None
-        selected = None
-
-
-root = Tk()
-root.geometry("1024x768")
-root.title("AI Plays Baagchal")
-
-
-canv = Canvas(root, width=700, height=700, bg='#8b5a2b')
-canv.pack()
-turn_label = Label(root, text="Turn:", font=("Helvetica", 16))
-turn_label.pack()
-#
-turn = Label(root, text="", font=("Helvetica", 16), fg="red")
-turn.configure(text=current_turn)
-turn.pack()
-
-# Load blank image
-blank_img = PhotoImage(file='blank_64x64.png')
-
-tiger_img = PhotoImage(file='tigers/tiger_64x64.png')
-
-goat_img = PhotoImage(file='goats/goat_64x64.png')
 
 
 def draw_board(board):
@@ -197,6 +261,38 @@ def draw_board(board):
     draw_boxes()
     # draw_blank_buttons()
     place_objects()
+
+root = Tk()
+root.geometry("1024x800")
+root.resizable(False, False)
+root.title("AI Plays Baagchal")
+
+board_frame = LabelFrame(root, text="Baagchal")
+board_frame.grid(row=0, column=0, padx=10, pady=10)
+
+details_frame = LabelFrame(root, text="Details: ")
+details_frame.grid(row=0, column=1)
+# Load blank image
+blank_img = PhotoImage(file='blank_64x64.png')
+tiger_img = PhotoImage(file='tigers/tiger_64x64.png')
+goat_img = PhotoImage(file='goats/goat_64x64.png')
+
+canv = Canvas(board_frame, width=700, height=700, bg='#8b5a2b')
+canv.grid(row=0)
+
+# Turn Label
+turn_label = Label(details_frame, text=f"Turn: {current_turn}", font=("Helvetica", 16), fg="red")
+turn_label.grid(row=0, column=0)
+
+# Goats killed
+goats_killed_label = Label(details_frame, text=f"Goats Killed: {goats_killed}", font=("Helvetica", 16))
+# goats_killed_label.pack()
+goats_killed_label.grid(row=1, column=0)
+
+# Goats in hand
+goats_in_hand_label = Label(details_frame, text=f"Goats in hand: {goats_in_hand}", font=("Helvetica", 16))
+# goats_in_hand_label.pack()
+goats_in_hand_label.grid(row=2, column=0)
 
 print(grid)
 draw_board(grid)
