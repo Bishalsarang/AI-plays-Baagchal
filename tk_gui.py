@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import  messagebox
 from collections import namedtuple
 import time
 
@@ -7,6 +8,13 @@ BOARD_HEIGHT, BOARD_WIDTH = 600, 600
 
 grid = [['_' for _ in range(5)] for _ in range(5)]
 
+
+
+"""Next Move"""
+x_equals_y_operations = [(0, -1), (0, 1), (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0), (1, 1)]
+x_not_equals_y_operations = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+""""""
+
 graphic_board = [
                  [(20, 10), (170, 10), (320, 10), (470, 10), (620, 10)],
                  [(20, 160), (170, 160), (320, 160), (470, 160), (620, 160)],
@@ -14,6 +22,7 @@ graphic_board = [
                  [(20, 460), (170, 460), (320, 460), (470, 460), (620, 460)],
                  [(20, 600), (170, 600), (320, 600), (470, 600), (620, 600)],
                  ]
+
 
 # Place tiger at corners
 grid[0][0] = grid[0][4] = grid[4][0] = grid[4][4] = 'T'
@@ -28,6 +37,7 @@ move_from = Move(None, None)
 move_to = Move(None, None)
 selected = None
 current_turn = 'Goat'
+winner = None
 goats_in_hand = 20
 goats_killed = 0
 
@@ -39,16 +49,93 @@ def switch_turn():
         current_turn = 'Goat'
     # turn.configure(current_turn)
 
+def is_inside_board(row, col):
+    return 0 <= row < 5 and 0 <= col < 5
+
+def is_reachable(row1, col1, row2, col2):
+    operations = x_equals_y_operations.copy()
+    if row1 % 2 != col1 % 2:
+        operations = x_not_equals_y_operations.copy()
+
+    for offset_x, offset_y in operations:
+        next_x, next_y = row1 + offset_x, col1 + offset_y
+        if is_inside_board(next_x, next_y)  and (next_x, next_y) == (row2, col2):
+            return True
+    return False
+
+
+def is_reachable_to_eat(row1, col1, row2, col2):
+    operations = x_equals_y_operations.copy()
+    if row1 % 2 != col1 % 2:
+        operations = x_not_equals_y_operations.copy()
+
+    for offset_x, offset_y in operations:
+        # Next ma chai goat hunx
+        next_x, next_y = row1 + offset_x, col1 + offset_y
+        if is_inside_board(next_x, next_y) and grid[next_x][next_y] == 'G':
+            next_next_x, next_next_y = row1 + 2 * offset_x, col1 + 2 * offset_y
+            if is_inside_board(next_next_x, next_next_y) and (next_next_x, next_next_y) == (row2, col2):
+                return True
+    return False
+
+
+def locate_goat_to_be_eaten(row1, col1, row2, col2):
+    operations = x_equals_y_operations.copy()
+    if row1 % 2 != col1 % 2:
+        operations = x_not_equals_y_operations.copy()
+
+    for offset_x, offset_y in operations:
+        # Next ma chai goat hunx
+        next_x, next_y = row1 + offset_x, col1 + offset_y
+        if is_inside_board(next_x, next_y) and grid[next_x][next_y] == 'G':
+            next_next_x, next_next_y = row1 + 2 * offset_x, col1 + 2 * offset_y
+            if is_inside_board(next_next_x, next_next_y) and (next_next_x, next_next_y) == (row2, col2):
+                return next_x, next_y
+    return -1, -1
+
+
 def graphics_coordinates_to_index(x, y):
     for i in range(5):
         for j in range(5):
             if graphic_board[i][j] == (x, y):
                 return i, j
 
+def can_move(row, col):
+    operations = x_equals_y_operations.copy()
+    if row % 2 != col % 2:
+        operations = x_not_equals_y_operations.copy()
+
+    for offset_x, offset_y in operations:
+        next_x, next_y = row + offset_x, col + offset_y
+        if is_inside_board(next_x, next_y) and grid[next_x][next_y] == '_':
+            return True
+
+        next_next_x, next_next_y = row + 2 * offset_x, col + 2 * offset_y
+        if is_inside_board(next_next_x, next_next_y) and grid[next_next_x][next_next_y] == '_':
+            return True
+    return False
+
+
+
+def is_game_over():
+    global winner
+    if goats_killed >= 4:
+        winner = "Tiger"
+        return True
+
+    for i in range(5):
+        for j in range(5):
+            if grid[i][j] == 'T':
+                if can_move(i, j):
+                    return False
+
+    winner = "Goat"
+    return True
+
+
 
 def onObjectClick(event):
-
-    global move_from, move_to, object_to_be_moved, selected, grid, current_turn, goats_in_hand
+    global move_from, move_to, object_to_be_moved, selected, grid, current_turn, goats_in_hand, goats_killed
     # print(type(event.widget))
     print('Clicked', event.x, event.y, event.widget)
     obj = event.widget.find_closest(event.x, event.y, halo=5)
@@ -108,7 +195,7 @@ def onObjectClick(event):
                     row_1, col_1 = graphics_coordinates_to_index(*move_from)
                     row_2, col_2 = graphics_coordinates_to_index(*move_to)
 
-                    if grid[row_2][col_2] == '_':
+                    if is_reachable(row_1, col_1, row_2, col_2) and grid[row_2][col_2] == '_':
                         if move_from.x == move_to.x and move_from.y != move_to.y:
                             # Up ki down
                             canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
@@ -123,9 +210,6 @@ def onObjectClick(event):
                         grid[row_1][col_1] = '_'
                         grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
                         print(grid)
-                        blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img, anchor=NW, tag="blank")
-                        canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
-                        canv.update()
                         print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
                         switch_turn()
                         turn_label.configure(text=f"Turn: {current_turn}")
@@ -145,6 +229,7 @@ def onObjectClick(event):
                 move_to = Move(None, None)
                 object_to_be_moved = None
                 selected = None
+                root.after(100, draw_board(grid))
     elif current_turn == "Tiger":
 
         if clicked_object_tag.startswith(current_turn[0].lower()) and move_from == (None, None):
@@ -167,7 +252,8 @@ def onObjectClick(event):
                 row_1, col_1 = graphics_coordinates_to_index(*move_from)
                 row_2, col_2 = graphics_coordinates_to_index(*move_to)
 
-                if grid[row_2][col_2] == '_':
+                # Normal Move
+                if is_reachable(row_1, col_1, row_2, col_2) and grid[row_2][col_2] == '_':
                     if move_from.x == move_to.x and move_from.y != move_to.y:
                         # Up ki down
                         canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
@@ -183,21 +269,40 @@ def onObjectClick(event):
                     grid[row_1][col_1] = '_'
                     grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
                     print(grid)
-                    blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img,
-                                                anchor=NW, tag="blank")
-                    canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
-                    canv.update()
                     print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
                     switch_turn()
                     turn_label.configure(text=f"Turn: {current_turn}")
+                # Eat move
+                elif is_reachable_to_eat(row_1, col_1, row_2, col_2) and grid[row_2][col_2] == '_':
+                    goat_x, goat_y = locate_goat_to_be_eaten(row_1, col_1, row_2, col_2)
+                    if move_from.x == move_to.x and move_from.y != move_to.y:
+                        # Up ki down
+                        canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
 
-            # delete the selected boc
+                    elif move_from.y == move_to.y and move_to.x != move_to.y:
+                        # Left or right
+                        canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
+                    else:
+                        # Move diagonally
+                        canv.move(object_to_be_moved, (move_to.x - move_from.x),
+                                  (move_to.y - move_from.y))
+
+                    grid[row_1][col_1] = '_'
+                    grid[goat_x][goat_y] = '_'
+                    grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
+                    print(grid)
+                    goats_killed += 1
+                    print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
+                    switch_turn()
+                    turn_label.configure(text=f"Turn: {current_turn}")
+                    goats_killed_label.configure(text=f"Goats killed: {goats_killed}")
+
+            # delete the selected box
             canv.delete(selected)
             move_from = Move(None, None)
             move_to = Move(None, None)
             object_to_be_moved = None
             selected = None
-
             root.after(100, draw_board(grid))
         else:
             # From and to same
@@ -206,14 +311,19 @@ def onObjectClick(event):
             move_to = Move(None, None)
             object_to_be_moved = None
             selected = None
+            root.after(100, draw_board(grid))
 
 
 
 def draw_board(board):
-
-    # First clear the canvas
+    if is_game_over():
+        print(f"{winner} wins the game")
+        messagebox.showinfo("Game Over", f"{winner} wins the game")
+        root.destroy()
+        # First clear the canvas
     canv.delete("all")
     x, y = 50, 50
+
 
     def draw_lines():
         line_coordinates = [[(x, y), (x + BOARD_WIDTH, y + BOARD_HEIGHT)],
