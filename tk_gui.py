@@ -27,6 +27,16 @@ object_to_be_moved = None
 move_from = Move(None, None)
 move_to = Move(None, None)
 selected = None
+current_turn = 'Goat'
+
+
+def switch_turn():
+    global current_turn
+    if current_turn == 'Goat':
+        current_turn = 'Tiger'
+    else:
+        current_turn = 'Goat'
+    # turn.configure(current_turn)
 
 def graphics_coordinates_to_index(x, y):
     for i in range(5):
@@ -37,7 +47,7 @@ def graphics_coordinates_to_index(x, y):
 
 def onObjectClick(event):
 
-    global move_from, move_to, object_to_be_moved, selected, grid
+    global move_from, move_to, object_to_be_moved, selected, grid, current_turn
     # print(type(event.widget))
     print('Clicked', event.x, event.y, event.widget)
     obj = event.widget.find_closest(event.x, event.y, halo=5)
@@ -54,12 +64,13 @@ def onObjectClick(event):
         if object_to_be_moved_tag.startswith("blank"):
             object_to_be_moved_tag = "blank"
 
-
-
-    if move_from == (None, None):
+    print(clicked_object_tag)
+    if clicked_object_tag.startswith(current_turn[0].lower()) and move_from == (None, None):
         move_from = Move(*canv.coords(obj))
-        selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green", width=4, tag="selected")
+
         object_to_be_moved = obj
+        selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green", width=4, tag="selected")
+
     # Move is possible
     elif object_to_be_moved_tag != "blank" and move_to == (None, None):
         move_to = Move(*canv.coords(obj))
@@ -92,7 +103,8 @@ def onObjectClick(event):
                 canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
                 canv.update()
                 print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
-
+                switch_turn()
+                turn.configure(text=current_turn)
 
         # delete the selected boc
         canv.delete(selected)
@@ -114,7 +126,16 @@ def onObjectClick(event):
 root = Tk()
 root.geometry("1024x768")
 root.title("AI Plays Baagchal")
+
+
 canv = Canvas(root, width=700, height=700, bg='#8b5a2b')
+canv.pack()
+turn_label = Label(root, text="Turn:", font=("Helvetica", 16))
+turn_label.pack()
+#
+turn = Label(root, text="", font=("Helvetica", 16), fg="red")
+turn.configure(text=current_turn)
+turn.pack()
 
 # Load blank image
 blank_img = PhotoImage(file='blank_64x64.png')
@@ -179,5 +200,5 @@ def draw_board(board):
 
 print(grid)
 draw_board(grid)
-canv.pack()
+
 root.mainloop()
