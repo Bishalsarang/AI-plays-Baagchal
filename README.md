@@ -3,7 +3,7 @@ In this repository, I'll be writing an AI to play Baagchal using minimax algorit
   
   
   ## Screenshots
-  ![enter image description here](https://raw.githubusercontent.com/sarangbishal/AI-plays-Baagchal/master/images/screenshots/sc1.jpg?token=AG2ULFG4QFL2MDVYMGVHBQK6LJ5QI)
+  ![enter image description here](https://raw.githubusercontent.com/sarangbishal/AI-plays-Baagchal/master/images/screenshots/sc1.JPG)
   
 ## TODOS:
 
