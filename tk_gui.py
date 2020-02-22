@@ -1,5 +1,6 @@
 from tkinter import *
-from collections import  namedtuple
+from collections import namedtuple
+import time
 
 RECTANGLE_HEIGHT, RECTANGLE_WIDTH = 150, 150
 BOARD_HEIGHT, BOARD_WIDTH = 600, 600
@@ -57,8 +58,9 @@ def onObjectClick(event):
 
     if move_from == (None, None):
         move_from = Move(*canv.coords(obj))
-        selected = canv.create_rectangle(canv.bbox((clicked_object_tag)), outline="green", width=4, tag="selected")
+        selected = canv.create_rectangle(canv.bbox(clicked_object_tag), outline="green", width=4, tag="selected")
         object_to_be_moved = obj
+    # Move is possible
     elif object_to_be_moved_tag != "blank" and move_to == (None, None):
         move_to = Move(*canv.coords(obj))
 
@@ -70,21 +72,27 @@ def onObjectClick(event):
 
             row_1, col_1 = graphics_coordinates_to_index(*move_from)
             row_2, col_2 = graphics_coordinates_to_index(*move_to)
-            if move_from.x == move_to.x and move_from.y != move_to.y:
-                # Up ki down
-                canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
 
-            elif move_from.y == move_to.y and move_to.x != move_to.y:
-                # Left or right
-                canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
-            else:
-                # Move diagonally
-                canv.move(object_to_be_moved, (move_to.x - move_from.x), (move_to.y - move_from.y))
+            if grid[row_2][col_2] == '_':
+                if move_from.x == move_to.x and move_from.y != move_to.y:
+                    # Up ki down
+                    canv.move(object_to_be_moved, 0, (move_to.y - move_from.y))
 
-            blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img, anchor=NW)
-            canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
-            canv.update()
-            print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
+                elif move_from.y == move_to.y and move_to.x != move_to.y:
+                    # Left or right
+                    canv.move(object_to_be_moved, (move_to.x - move_from.x), 0)
+                else:
+                    # Move diagonally
+                    canv.move(object_to_be_moved, (move_to.x - move_from.x), (move_to.y - move_from.y))
+
+                grid[row_1][col_1] = '_'
+                grid[row_2][col_2] = object_to_be_moved_tag[0].upper()
+                print(grid)
+                blank_3 = canv.create_image(move_from.x, move_from.y, image=blank_img, anchor=NW, tag="blank")
+                canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
+                canv.update()
+                print(f"Move {object_to_be_moved} from {move_from} to {move_to}")
+
 
         # delete the selected boc
         canv.delete(selected)
@@ -92,17 +100,15 @@ def onObjectClick(event):
         move_to = Move(None, None)
         object_to_be_moved = None
         selected = None
+
+        root.after(100, draw_board(grid))
     else:
+        # From and to same
         canv.delete(selected)
         move_from = Move(None, None)
         move_to = Move(None, None)
         object_to_be_moved = None
         selected = None
-
-
-
-
-
 
 
 root = Tk()
@@ -119,10 +125,10 @@ goat_img = PhotoImage(file='goats/goat_64x64.png')
 
 
 def draw_board(board):
+
+    # First clear the canvas
+    canv.delete("all")
     x, y = 50, 50
-
-    # Contains coordinates
-
 
     def draw_lines():
         line_coordinates = [[(x, y), (x + BOARD_WIDTH, y + BOARD_HEIGHT)],
@@ -145,28 +151,7 @@ def draw_board(board):
                 x + (i + 1) * RECTANGLE_WIDTH, y + (j + 1) * RECTANGLE_HEIGHT)
                 canv.create_rectangle(bottom_corner_coordinates, top_corner_coordinates, width=8)
 
-    def draw_blank_buttons():
-        corner_coordinates = set()
-        init_x, init_y = 20, 10
-        corner_coordinates.add((init_x, BOARD_HEIGHT))
-        corner_coordinates.add((init_x + 4 * RECTANGLE_WIDTH, init_y))
-
-        # Draw blank at each points
-        for i in range(4):
-            for j in range(4):
-                corner_coordinates.add(
-                    (init_x + i * RECTANGLE_WIDTH, init_y + j * RECTANGLE_HEIGHT))
-                corner_coordinates.add(
-                    (init_x + (i + 1) * RECTANGLE_WIDTH, init_y + (j + 1) * RECTANGLE_HEIGHT))
-
-
-        for i, (x1, y1) in enumerate(corner_coordinates):
-            blank = canv.create_image(x1, y1, image=blank_img, anchor=NW, tag="blank_" + str(i))
-            canv.tag_bind(blank, '<Button-1>', onObjectClick)
-            canv.tag_bind(blank, '<Button-2>', onObjectClick)
-
     def place_objects():
-
         tiger_cnt, goat_cnt, blank_cnt = 0, 0, 0
         for i in range(5):
             for j in range(5):
@@ -192,36 +177,7 @@ def draw_board(board):
     # draw_blank_buttons()
     place_objects()
 
-
-
-
-
+print(grid)
 draw_board(grid)
-# # Load goat image
-
-# goat_object = canv.create_image(600, 10, image=goat_img, anchor=NW, tag="goat")
-#
-#
-
-# Load tiger image
-
-#
-# blank_1 = canv.create_image(175, 10, image=blank_img, anchor=NW)
-# blank_2 = canv.create_image(315, 10, image=blank_img, anchor=NW)
-# blank_3 = canv.create_image(455, 10, image=blank_img, anchor=NW)
-# tiger_1 = canv.create_image(35, 10, image=tiger_img, anchor=NW, tag="tiger_1")
-#
-#
-#
-#
-#
-#
-# canv.tag_bind(goat_object, '<Button-1>', onObjectClick)
-# canv.tag_bind(tiger_1, '<Button-1>', onObjectClick)
-# canv.tag_bind(blank_1, '<Button-1>', onObjectClick)
-# canv.tag_bind(blank_2, '<Button-1>', onObjectClick)
-# canv.tag_bind(blank_3, '<Button-1>', onObjectClick)
-
-
 canv.pack()
 root.mainloop()
