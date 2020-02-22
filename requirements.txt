@@ -1,1 +1,2 @@
-pygame==1.9.6
+pydot==1.4.1
+pyparsing==2.4.6

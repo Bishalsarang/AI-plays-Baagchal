@@ -273,9 +273,9 @@ board_frame.grid(row=0, column=0, padx=10, pady=10)
 details_frame = LabelFrame(root, text="Details: ")
 details_frame.grid(row=0, column=1)
 # Load blank image
-blank_img = PhotoImage(file='blank_64x64.png')
-tiger_img = PhotoImage(file='tigers/tiger_64x64.png')
-goat_img = PhotoImage(file='goats/goat_64x64.png')
+blank_img = PhotoImage(file='images/blanks/blank_64x64.png')
+tiger_img = PhotoImage(file='images/tigers/tiger_64x64.png')
+goat_img = PhotoImage(file='images/goats/goat_64x64.png')
 
 canv = Canvas(board_frame, width=700, height=700, bg='#8b5a2b')
 canv.grid(row=0)
