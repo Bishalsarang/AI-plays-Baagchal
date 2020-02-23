@@ -314,7 +314,6 @@ def onObjectClick(event):
             root.after(100, draw_board(grid))
 
 
-
 def draw_board(board):
     if is_game_over():
         print(f"{winner} wins the game")
