@@ -1,5 +1,8 @@
 from utilities import can_move
+from collections import namedtuple
+from tkinter import StringVar
 
+Player = namedtuple("Player", "role type")
 
 class Game(object):
     def __init__(self):
@@ -8,8 +11,29 @@ class Game(object):
         self.goats_in_hand = 20
         self.goats_killed = 0
 
+        self.player_1 = Player("Goat", "Human")
+        self.player_2 = Player("Tiger", "AI")
+
+        self.ai = None
+        self.role = dict()
+        self.role["Goat"] = "Human"
+        self.role["Tiger"] = "Human"
+        if self.player_1.type == "AI":
+            self.ai = "Goat"
+            self.role["Goat"] = "AI"
+        elif self.player_2.type == "AI":
+            self.ai = "Tiger"
+            self.role["Tiger"] = "AI"
+        assert(self.player_1.role != self.player_2.role)
         self.grid = [['_' for _ in range(5)] for _ in range(5)]
         self.board_init()
+
+
+    def is_two_player_mode(self):
+        return self.player_1.type[1] == self.player_1.type[1]
+
+    def get_role(self):
+        return self.role[self.current_turn]
 
     def board_init(self):
         # Place tiger at corners

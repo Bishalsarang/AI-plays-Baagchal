@@ -5,11 +5,13 @@
 from assets import Assets
 from collections import namedtuple
 from game import  Game
-from tkinter import Tk, Label, Button, LabelFrame, Canvas, PhotoImage, NW, messagebox
+from tkinter import Tk, Label, Button, LabelFrame, Canvas, PhotoImage, NW, messagebox, StringVar
 from utilities import *
 
-Move = namedtuple("Move", "x y")
+import random
 
+Move = namedtuple("Move", "x y")
+called = 0
 class UI(object):
     def __init__(self, master):
         self.master = master
@@ -39,7 +41,12 @@ class UI(object):
         self.board_frame_init()
 
         # Make Details Frame
-        self.turn_label = self.goats_killed_label = self.goats_in_hand_label = None
+        self.current_turn_role = StringVar()
+        self.set_current_turn_role()
+        self.previous_move_completed = True
+        self.current_turn_role.trace_add("write", lambda *args: self.callback())
+
+        self.turn_label = self.goats_killed_label = self.goats_in_hand_label = self.role = None
         self.details_frame = LabelFrame(master, text="Details: ")
         self.details_frame.grid(row=0, column=1)
         self.details_frame_init()
@@ -49,6 +56,22 @@ class UI(object):
         self.move_to = Move(None, None)
         self.object_to_be_moved = None
         self.selected = None
+
+    def set_current_turn_role(self):
+        self.current_turn_role.set(self.game.role.get(self.game.current_turn))
+        print(self.current_turn_role.get())
+
+    def callback(self):
+        print("Make AI Move")
+        if self.previous_move_completed:
+            row1, col1 = random.randint(0, 4), random.randint(0, 4)
+            # self.game.grid[][0] = '_'
+            self.game.grid[row1][col1] = 'T'
+            self.game.switch_turn()
+            self.turn_label.configure(text=f"Turn: {self.game.current_turn}")
+            self.goats_in_hand_label.configure(text=f"Goats in hand: {self.game.goats_in_hand}")
+            self.role.configure(text=f"Turn: {self.current_turn_role.get()}")
+            self.refresh_board()
 
     def is_goat_turn(self):
         return self.game.current_turn == "Goat"
@@ -63,6 +86,7 @@ class UI(object):
         self.selected = None
 
     def refresh_board(self):
+
         self.canv.delete(self.selected)
         self.reset_move_from_to()
         self.master.after(100, self.draw_board(self.game.grid))
@@ -91,6 +115,12 @@ class UI(object):
                 self.game.switch_turn()
                 self.turn_label.configure(text=f"Turn: {self.game.current_turn}")
                 self.goats_in_hand_label.configure(text=f"Goats in hand: {self.game.goats_in_hand}")
+
+                self.previous_move_completed = True
+                self.refresh_board()
+            else:
+                self.previous_move_completed = False
+
         # If no goat is left in hand the move goats on board
         else:
             # Get from location for goat
@@ -107,15 +137,16 @@ class UI(object):
                     # delete the selected boc
                     self.canv.delete(self.selected)
 
-                    row_1, col_1 = graphics_coordinates_to_index(*self.move_from)
-                    row_2, col_2 = graphics_coordinates_to_index(*self.move_to)
+                    row_1, col_1 = graphics_coordinates_to_index(self.graphic_board, *self.move_from)
+                    row_2, col_2 = graphics_coordinates_to_index(self.graphic_board, *self.move_to)
 
                     # Move to next Position
                     if is_reachable(row_1, col_1, row_2, col_2) and self.game.grid[row_2][col_2] == '_':
                         self.move_to_next_cell(object_to_be_moved_tag, row_1, col_1, row_2, col_2)
-
+                self.previous_move_completed = True
                 self.refresh_board()
             else:
+                self.previous_move_completed = False
                 # From and to same
                 self.refresh_board()
 
@@ -190,15 +221,17 @@ class UI(object):
                 # Eat move
                 elif is_reachable_to_eat(self.game.grid, row_1, col_1, row_2, col_2) and self.game.grid[row_2][col_2] == '_':
                     self.make_eat_move(object_to_be_moved_tag, row_1, col_1, row_2, col_2)
+                self.previous_move_completed = True
 
             self.refresh_board()
         else:
+            self.previous_move_completed = False
             # From and to same
             self.refresh_board()
 
+
     def onObjectClick(self, event):
         obj = event.widget.find_closest(event.x, event.y, halo=5)
-        clicked_object_tag = self.canv.itemconfigure(obj).get('tags')[4].split()[0]
 
         object_to_be_moved_tag = "blank"
         if self.object_to_be_moved is not None:
@@ -208,9 +241,27 @@ class UI(object):
                 object_to_be_moved_tag = "blank"
 
         if self.is_goat_turn():
-            self.make_goat_move(obj, object_to_be_moved_tag)
-        else:
-            self.make_tiger_move(obj, object_to_be_moved_tag)
+            if self.game.ai and self.game.ai[0].upper() != "G":
+                self.make_goat_move(obj, object_to_be_moved_tag)
+                # Tiger is AI
+                self.set_current_turn_role()
+
+                self.role.configure(text=f"Role: {self.current_turn_role.get()}")
+
+            else:
+                self.make_goat_move(obj, object_to_be_moved_tag)
+
+        elif self.is_tiger_turn():
+            if self.game.ai and self.game.ai[0].upper() != "T":
+                self.make_tiger_move(obj, object_to_be_moved_tag)
+                # Goat is AI
+                self.set_current_turn_role()
+                self.role.configure(text=f"Role: {self.current_turn_role.get()}")
+            else:
+                self.make_tiger_move(obj, object_to_be_moved_tag)
+
+
+
 
     def board_init(self):
 
@@ -226,12 +277,17 @@ class UI(object):
         ]
 
     def draw_board(self, board):
+        global called
+        print("called: ", called)
+        called += 1
         if self.game.is_game_over():
             messagebox.showinfo("Game Over", f"{self.game.winner} wins the game")
             self.master.destroy()
         # CLear the canvas first
         self.canv.delete("all")
         x = y = 50
+
+
         def draw_lines():
             line_coordinates = [[(x, y), (x + self.BOARD_WIDTH, y + self.BOARD_HEIGHT)],
                                 [(x + self.BOARD_WIDTH // 2, y),
@@ -276,11 +332,14 @@ class UI(object):
                         blank = self.canv.create_image(x1, y1, image=self.blank_img, anchor=NW,
                                                   tag="blank_" + str(blank_cnt))
                         self.canv.tag_bind(blank, '<Button-1>', self.onObjectClick)
+
                         blank_cnt += 1
 
         draw_lines()
         draw_boxes()
         place_objects()
+
+
 
     def board_frame_init(self):
         self.canv = Canvas(self.board_frame, width=700, height=700, bg='#8b5a2b')
@@ -293,15 +352,20 @@ class UI(object):
                            fg="red")
         self.turn_label.grid(row=0, column=0)
 
+        # Player Role
+        self.role = Label(self.details_frame,
+                                         text=f"Role: {self.current_turn_role.get()}",
+                                         font=("Helvetica", 16))
+        self.role .grid(row=1, column=0)
         # Goats killed
         self.goats_killed_label = Label(self.details_frame, text=f"Goats Killed: {self.game.goats_killed}",
                                    font=("Helvetica", 16))
-        self.goats_killed_label.grid(row=1, column=0)
+        self.goats_killed_label.grid(row=2, column=0)
 
         # Goats in hand
         self.goats_in_hand_label = Label(self.details_frame, text=f"Goats in hand: {self.game.goats_in_hand}",
                                     font=("Helvetica", 16))
-        self.goats_in_hand_label.grid(row=2, column=0)
+        self.goats_in_hand_label.grid(row=3, column=0)
 
     def ui_init(self):
         """
