@@ -3,6 +3,10 @@ moves.txt
 .idea
 .idea
 .idea/
+build
+dist
+gui.spec
+tk_gui.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
