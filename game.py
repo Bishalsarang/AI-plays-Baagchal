@@ -30,7 +30,7 @@ class Game(object):
 
 
     def is_two_player_mode(self):
-        return self.player_1.type[1] == self.player_1.type[1]
+        return self.player_1.type == "Human" and self.player_2.type == "Human"
 
     def get_role(self):
         return self.role[self.current_turn]
