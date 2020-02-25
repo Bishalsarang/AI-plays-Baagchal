@@ -4,15 +4,20 @@
 
 from assets import Assets
 from collections import namedtuple
-from game import Game
+from game import Game, Player
 from agent import Agent
-from tkinter import Tk, Label, Button, LabelFrame, Canvas, PhotoImage, NW, messagebox, StringVar
-from utilities import *
+from tkinter import Tk, Label, Button, LabelFrame, Canvas, PhotoImage, NW, messagebox, Menu, Toplevel, ttk
 
-import random
+from utilities import *
+from configparser import  ConfigParser
+
+
+parser = ConfigParser()
+parser.read("settings.conf")
 
 Move = namedtuple("Move", "x y")
-called = 0
+
+
 class UI(object):
     def __init__(self, master):
         self.master = master
@@ -35,23 +40,17 @@ class UI(object):
 
         # Set Title window size
         self.ui_init()
+        self.menu_init()
 
         # Make board frame
         self.board_frame = LabelFrame(master, text="Baagchal")
-        self.board_frame.grid(row=0, column=0, padx=10, pady=10)
+        self.board_frame.grid(row=1, column=0, padx=10, pady=10)
         self.canv = None
         self.board_frame_init()
 
-        # Make Details Frame
-        # self.current_turn_role = StringVar()
-        # self.current_turn_role.trace_add("write", lambda *args: self.callback())
-        # self.set_current_turn_role()
-        # self.previous_move_completed = True
-
-
         self.turn_label = self.goats_killed_label = self.goats_in_hand_label = self.role = None
         self.details_frame = LabelFrame(master, text="Details: ")
-        self.details_frame.grid(row=0, column=1)
+        self.details_frame.grid(row=1, column=1)
         self.details_frame_init()
 
         # Event parameters
@@ -60,9 +59,11 @@ class UI(object):
         self.object_to_be_moved = None
         self.selected = None
 
-    def new_game(self):
-        # If AI Mode check who is AI
 
+    def new_game(self):
+        self.__init__(root)
+        self.game.board_init()
+        self.game.reload_config()
         if not self.game.is_two_player_mode():
             if self.game.ai == "Tiger":
                 self.ai_turn = False
@@ -71,34 +72,16 @@ class UI(object):
             self.ai_enabled = True
         else:
             self.ai_enabled = False
-        print(self.ai_enabled, self.ai_turn)
         self.refresh_board()
-
-    # def set_current_turn_role(self):
-    #     self.current_turn_role.set(self.game.role.get(self.game.current_turn))
-    #     print(self.current_turn_role.get())
-
-    # def callback(self):
-    #     print("Make AI Move")
-    #     if self.previous_move_completed:
-    #         row1, col1 = random.randint(0, 4), random.randint(0, 4)
-    #         if self.game.ai == "Tiger":
-    #             # self.game.grid[][0] = '_'
-    #             self.game.grid[row1][col1] = 'T'
-    #
-    #         else:
-    #             self.game.grid[row1][col1] = 'G'
-    #         self.game.switch_turn()
-    #         self.turn_label.configure(text=f"Turn: {self.game.current_turn}")
-    #         self.goats_in_hand_label.configure(text=f"Goats in hand: {self.game.goats_in_hand}")
-    #         self.role.configure(text=f"Turn: {self.current_turn_role.get()}")
-    #         self.refresh_board()
 
     def is_goat_turn(self):
         return self.game.current_turn == "Goat"
 
     def is_tiger_turn(self):
         return not self.is_goat_turn()
+
+    def change_settings(self):
+        pass
 
     def reset_move_from_to(self):
         self.move_from = Move(None, None)
@@ -212,9 +195,7 @@ class UI(object):
             # From and to same
             self.refresh_board()
 
-
     def onObjectClick(self, event):
-        print(self.ai_turn)
         obj = event.widget.find_closest(event.x, event.y, halo=5)
         object_to_be_moved_tag = "blank"
         if self.object_to_be_moved is not None:
@@ -246,31 +227,14 @@ class UI(object):
 
     def make_ai_move(self):
         ag = Agent(self.game.grid, self.game.current_turn, self.game.goats_in_hand, self.game.goats_killed)
-        move = ag.get_best_move()
+        # move = ag.get_best_move()
         ag.make_best_move()
         self.game.goats_killed = ag.dead_goats
-        print(ag.dead_goats)
         self.game.goats_in_hand = ag.goats_in_hand
         self.game.board = ag.board
         self.update_detail_labels()
 
     def draw_board(self, board):
-        global called
-        print("called: ", called)
-        called += 1
-
-        if self.ai_enabled and self.ai_turn:
-            self.make_ai_move()
-            self.game.switch_turn()
-            self.update_detail_labels()
-            self.ai_turn = not self.ai_turn
-
-
-        # CLear the canvas first
-        self.canv.delete("all")
-        x = y = 50
-
-
         def draw_lines():
             line_coordinates = [[(x, y), (x + self.BOARD_WIDTH, y + self.BOARD_HEIGHT)],
                                 [(x + self.BOARD_WIDTH // 2, y),
@@ -318,19 +282,83 @@ class UI(object):
 
                         blank_cnt += 1
 
+        if self.ai_enabled and self.ai_turn:
+            self.make_ai_move()
+            self.game.switch_turn()
+            self.update_detail_labels()
+            self.ai_turn = not self.ai_turn
+
+            # CLear the canvas first
+        self.canv.delete("all")
+        x = y = 50
+
         draw_lines()
         draw_boxes()
         place_objects()
+
         if self.game.is_game_over():
             messagebox.showinfo("Game Over", f"{self.game.winner} wins the game")
             self.master.destroy()
 
-
-
     def board_frame_init(self):
         self.canv = Canvas(self.board_frame, width=700, height=700, bg='#8b5a2b')
         self.canv.grid(row=0)
-        # self.draw_board(self.game.grid)
+
+    def settings(self):
+        setting_window = Toplevel(self.master)
+        setting_window.title("Settings")
+        setting_window.geometry("300x300")
+
+        setting_window.transient(self.master)
+        setting_window.grab_set()
+
+        goat_label = Label(setting_window, text="Goat")
+        goat_label.grid(row=0, column=0, pady=10, padx=10)
+
+        options_1 = ttk.Combobox(setting_window, state="readonly",
+                                    values=[
+                                        "Human",
+                                        "AI",
+                                    ])
+        options_1.grid(row=0, column=1)
+
+        options_1_current = parser.get("settings", "goat")
+        selected = dict(options_1)['values'].index(options_1_current)
+        options_1.current(selected)
+
+        tiger_label = Label(setting_window, text="Tiger")
+        tiger_label.grid(row=1, column=0, pady=10, padx=10)
+        options_2 = ttk.Combobox(setting_window, state="readonly",
+                                 values=[
+                                     "Human",
+                                     "AI",
+                                 ])
+        options_2.grid(row=1, column=1)
+
+        options_2_current = parser.get("settings", "tiger")
+        selected = dict(options_2)['values'].index(options_2_current)
+        options_2.current(selected)
+
+        okay = Button(setting_window, text="Save", command=lambda:self.save_settings(options_1, options_2))
+        okay.grid(row=2, column=0)
+
+    def save_settings(self,options_1, options_2):
+        parser["settings"]["Goat"] = options_1.get()
+        parser["settings"]["Tiger"] = options_2.get()
+
+        with open("settings.conf", "w") as f:
+            parser.write(f)
+        messagebox.showinfo("Settings saved. ", "Settings updated. Restart to apply the changes")
+
+    def menu_init(self):
+        menubar = Menu(self.master)
+        menubar.add_command(label="New Game", command=self.new_game)
+        menubar.add_command(label="Settings", command=self.settings)
+
+        menubar.add_command(label="Quit!", command=self.master.quit)
+
+        # display the menu
+        self.master.config(menu=menubar)
 
     def details_frame_init(self):
         # Turn Label
@@ -361,6 +389,7 @@ class UI(object):
         self.master.geometry("1024x800")
         self.master.resizable(False, False)
 
+        Label(self.master, text="Baagchal").grid(row=0, column=0)
 
 
 root = Tk()

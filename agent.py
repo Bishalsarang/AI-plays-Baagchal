@@ -1,6 +1,11 @@
-from visualiser.visualiser import Visualiser as vs
+# Author: Bishal Sarang
+"""
+This file contains implementation of AI agent that uses minimax algorithm to find the best possible move
+"""
 from collections import namedtuple
 from utilities import  x_not_equals_y_operations, x_equals_y_operations, is_inside_board, is_game_over
+import random
+from copy import deepcopy
 
 Move = namedtuple("Move", "type frm to inter")
 INF = float("inf")
@@ -14,12 +19,29 @@ class Agent(object):
         self.turn = turn
         self.goats_in_hand = goats_in_hand
         self.dead_goats = dead_goats
+        self.best_goat_moves = []
+        self.best_tiger_moves = []
 
     def is_vacant(self, i, j):
         return self.board[i][j] == '_'
 
     def number_of_movable_tigers(self):
-        return 4
+        cnt = 0
+        for i in range(5):
+            for j in range(5):
+                operations = x_not_equals_y_operations
+                if i % 2 == j % 2:
+                    operations = x_equals_y_operations
+                if self.board[i][j] == 'T':
+                    for offset_x, offset_y in operations:
+                        next_i, next_j = i + offset_x, j + offset_y
+                        if is_inside_board(next_i, next_j) and self.is_vacant(next_i, next_j):
+                            cnt += 1
+                            break
+        assert(cnt <= 4)
+        return cnt
+
+
 
     def number_of_closed_spaces(self):
         cnt = 0
@@ -35,7 +57,7 @@ class Agent(object):
         if not winner[0]:
              # return 300 * self.number_of_movable_tigers() + 700 * self.dead_goats - 700 * self.number_of_closed_spaces() - depth
 
-             return 300 * self.number_of_movable_tigers() + 700 * self.dead_goats - depth
+             return 5 * self.number_of_movable_tigers() + 50 * self.dead_goats + 15 * self.number_of_goats_that_can_be_captured() - depth
             # return depth
 
         if winner[1] == "Goat":
@@ -51,6 +73,27 @@ class Agent(object):
                     moves.append(Move("p", None, (i, j), None))
         return moves
 
+
+    def number_of_goats_that_can_be_captured(self):
+        cnt = 0
+        board = deepcopy(self.board)
+        for i in range(5):
+            for j in range(5):
+                if board[i][j] == 'T':
+                    operations = x_not_equals_y_operations
+                    if i % 2 == j % 2:
+                        operations = x_equals_y_operations
+
+                    for offset_x, offset_y in operations:
+                        next_i, next_j = i + offset_x, j + offset_y
+                        if is_inside_board(next_i, next_j) and board[next_i][next_j] == 'G':
+                            next_next_i, next_next_j = i + 2 * offset_x, j + 2 * offset_y
+                            if is_inside_board(next_next_i, next_next_j) and \
+                                    board[next_next_i][next_next_j] == '_':
+                                board[next_i][next_j] = '_'
+                                cnt += 1
+
+        return cnt
 
     def move_goats(self):
         moves = []
@@ -168,6 +211,7 @@ class Agent(object):
         if depth == self.depth or abs(score) == INF:
             return score
 
+
         if not is_max:
             value = INF
 
@@ -177,10 +221,17 @@ class Agent(object):
                 beta = min(beta, current_value)
 
                 if current_value < value:
+
                     value = current_value
                     beta = min(beta, value)
                     if depth == 0:
+                        self.best_goat_moves.clear()
+                        self.best_goat_moves.append(move)
                         self.best_move = move
+                elif current_value == value:
+                    if depth == 0:
+                        self.best_goat_moves.append(move)
+
                 self.revert_move(move, is_max)
                 if alpha >= beta:
                     break
@@ -192,11 +243,19 @@ class Agent(object):
                 self.make_move(move, is_max)
                 current_value = self.minimax(False, depth + 1, alpha, beta)
                 if current_value > value:
+
                     value = current_value
                     alpha = max(alpha, value)
                     if depth == 0:
+                        self.best_tiger_moves.clear()
+                        self.best_tiger_moves.append(move)
                         self.best_move = move
+                elif current_value == value:
+                    if depth == 0:
+                        self.best_tiger_moves.append(move)
+
                 self.revert_move(move, is_max)
+
 
                 if alpha >= beta:
                     break
@@ -205,10 +264,12 @@ class Agent(object):
     def best_tiger_move(self):
         self.minimax()
         return self.best_move
+        # return random.choice(self.best_tiger_moves)
 
     def best_goat_move(self):
         self.minimax(is_max=False)
         return self.best_move
+        # return random.choice(self.best_goat_moves)
 
     def make_best_move(self):
         if self.turn == "Goat":

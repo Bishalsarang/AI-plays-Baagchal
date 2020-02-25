@@ -2,7 +2,13 @@
 In this repository, I'll be writing an AI to play Baagchal using minimax algorithm.  
   
 ## Installation
-There are currently no dependencies other than tkinter.
+``configparser`` is the only dependencies other than tkinter.
+
+``pip install configparser``
+
+or, alternatively:
+
+``pip install -r requirements.txt``
 
 ## Usage
 ``python gui.py``
@@ -10,7 +16,7 @@ There are currently no dependencies other than tkinter.
 ## Screenshots
   ![enter image description here](https://raw.githubusercontent.com/sarangbishal/AI-plays-Baagchal/master/images/screenshots/sc1.JPG)
   
-## TODOS:
+## TO DOS:
 
  - [x] GUI
  - [x] Map GUI to grid
@@ -18,5 +24,5 @@ There are currently no dependencies other than tkinter.
  - [x] Minimal working version for 2 players
  - [ ] Add Controls
  - [x] Implement AI: minimax
- - [] Improve Heuristic function
+ - [ ] Improve Heuristic function
  - [ ] Rework on the messy code

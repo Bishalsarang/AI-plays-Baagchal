@@ -1,4 +1,7 @@
-
+# Author: Bishal Sarang
+"""
+This file contains all the utilities function
+"""
 x_equals_y_operations = [(0, -1), (0, 1), (-1, -1), (-1, 0), (-1, 1), (1, -1), (1, 0),
                                  (1, 1)]
 x_not_equals_y_operations = [(0, -1), (0, 1), (-1, 0), (1, 0)]

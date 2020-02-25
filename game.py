@@ -1,6 +1,14 @@
+# Author: Bishal Saran
+"""
+This file contains all the game states like board config, goats_in_hand, goats_killed, current_turn etc
+"""
 from utilities import can_move
 from collections import namedtuple
-from tkinter import StringVar
+from configparser import  ConfigParser
+
+
+parser = ConfigParser()
+parser.read("settings.conf")
 
 Player = namedtuple("Player", "role type")
 
@@ -13,8 +21,8 @@ class Game(object):
         self.goats_in_hand = 20
         self.goats_killed = 0
 
-        self.player_1 = Player("Goat", "Human")
-        self.player_2 = Player("Tiger", "AI")
+        self.player_1 = Player("Goat", parser.get("settings", "Goat"))
+        self.player_2 = Player("Tiger", parser.get("settings", "Tiger"))
 
         self.ai = None
         self.role = dict()
@@ -27,8 +35,16 @@ class Game(object):
             self.ai = "Tiger"
             self.role["Tiger"] = "AI"
 
-        self.grid = [['_' for _ in range(5)] for _ in range(5)]
+        self.grid = None
         self.board_init()
+
+    def reload_config(self):
+        self.player_1 = Player("Goat", parser.get("settings", "Goat"))
+        self.player_2 = Player("Tiger", parser.get("settings", "Tiger"))
+
+    @classmethod
+    def reset(cls):
+        cls.__init__()
 
     def is_two_player_mode(self):
         return self.player_1.type == "Human" and self.player_2.type == "Human"
@@ -37,6 +53,7 @@ class Game(object):
         return self.role[self.current_turn]
 
     def board_init(self):
+        self.grid = [['_' for _ in range(5)] for _ in range(5)]
         # Place tiger at corners
         self.grid[0][0] = self.grid[0][4] = self.grid[4][0] = self.grid[4][4] = 'T'
 
