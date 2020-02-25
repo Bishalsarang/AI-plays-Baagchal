@@ -17,5 +17,6 @@ There are currently no dependencies other than tkinter.
  - [x] Add constraints for moves
  - [x] Minimal working version for 2 players
  - [ ] Add Controls
- - [ ] Implement AI: minimax
+ - [x] Implement AI: minimax
+ - [] Improve Heuristic function
  - [ ] Rework on the messy code

@@ -4,6 +4,8 @@ from tkinter import StringVar
 
 Player = namedtuple("Player", "role type")
 
+INF = float("inf")
+
 class Game(object):
     def __init__(self):
         self.current_turn = 'Goat'
@@ -24,10 +26,9 @@ class Game(object):
         elif self.player_2.type == "AI":
             self.ai = "Tiger"
             self.role["Tiger"] = "AI"
-        assert(self.player_1.role != self.player_2.role)
+
         self.grid = [['_' for _ in range(5)] for _ in range(5)]
         self.board_init()
-
 
     def is_two_player_mode(self):
         return self.player_1.type == "Human" and self.player_2.type == "Human"
@@ -46,7 +47,7 @@ class Game(object):
             self.current_turn = 'Goat'
 
     def is_game_over(self):
-        if self.goats_killed >= 4:
+        if self.goats_killed >= 5:
             self.winner = "Tiger"
             return True
 

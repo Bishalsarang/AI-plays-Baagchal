@@ -4,6 +4,18 @@ x_equals_y_operations = [(0, -1), (0, 1), (-1, -1), (-1, 0), (-1, 1), (1, -1), (
 x_not_equals_y_operations = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 
+def is_game_over(grid, goats_killed):
+    if goats_killed >= 5:
+        return True, "Tiger"
+
+    for i in range(5):
+        for j in range(5):
+            if grid[i][j] == 'T':
+                if can_move(grid, i, j):
+                    return False, "None"
+
+    return True, "Goat"
+
 def is_reachable_to_eat(grid, row1, col1, row2, col2):
     operations = x_equals_y_operations.copy()
     if row1 % 2 != col1 % 2:
