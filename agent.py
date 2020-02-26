@@ -3,9 +3,9 @@
 This file contains implementation of AI agent that uses minimax algorithm to find the best possible move
 """
 from collections import namedtuple
-from utilities import  x_not_equals_y_operations, x_equals_y_operations, is_inside_board, is_game_over
+from utilities import x_not_equals_y_operations, x_equals_y_operations, is_inside_board, is_game_over
 import random
-from datetime import  datetime
+from datetime import datetime
 from copy import deepcopy
 
 Move = namedtuple("Move", "type frm to inter")
@@ -20,8 +20,6 @@ class Agent(object):
         self.turn = turn
         self.goats_in_hand = goats_in_hand
         self.dead_goats = dead_goats
-        self.best_goat_moves = []
-        self.best_tiger_moves = []
 
     def is_vacant(self, i, j):
         return self.board[i][j] == '_'
@@ -224,12 +222,7 @@ class Agent(object):
                     value = current_value
                     beta = min(beta, value)
                     if depth == 0:
-                        self.best_goat_moves.clear()
-                        self.best_goat_moves.append(move)
                         self.best_move = move
-                elif current_value == value:
-                    if depth == 0:
-                        self.best_goat_moves.append(move)
 
                 self.revert_move(move, is_max)
                 if alpha >= beta:
@@ -246,15 +239,8 @@ class Agent(object):
                     value = current_value
                     alpha = max(alpha, value)
                     if depth == 0:
-                        self.best_tiger_moves.clear()
-                        self.best_tiger_moves.append(move)
                         self.best_move = move
-                elif current_value == value:
-                    if depth == 0:
-                        self.best_tiger_moves.append(move)
-
                 self.revert_move(move, is_max)
-
 
                 if alpha >= beta:
                     break
@@ -263,12 +249,10 @@ class Agent(object):
     def best_tiger_move(self):
         self.minimax()
         return self.best_move
-        # return random.choice(self.best_tiger_moves)
 
     def best_goat_move(self):
         self.minimax(is_max=False)
         return self.best_move
-        # return random.choice(self.best_goat_moves)
 
     def make_best_move(self):
         if self.turn == "Goat":

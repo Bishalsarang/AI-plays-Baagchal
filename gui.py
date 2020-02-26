@@ -9,7 +9,7 @@ from agent import Agent
 from tkinter import Tk, Label, Button, LabelFrame, Canvas, PhotoImage, NW, messagebox, Menu, Toplevel, ttk
 
 from utilities import *
-from configparser import  ConfigParser
+from configparser import ConfigParser
 
 
 parser = ConfigParser()
@@ -226,7 +226,7 @@ class UI(object):
         ]
 
     def make_ai_move(self):
-        ag = Agent(self.game.grid, self.game.current_turn, self.game.goats_in_hand, self.game.goats_killed)
+        ag = Agent(self.game.grid, self.game.current_turn, self.game.goats_in_hand, self.game.goats_killed, self.game.depth)
         # move = ag.get_best_move()
         ag.make_best_move()
         self.game.goats_killed = ag.dead_goats
@@ -339,12 +339,27 @@ class UI(object):
         selected = dict(options_2)['values'].index(options_2_current)
         options_2.current(selected)
 
-        okay = Button(setting_window, text="Save", command=lambda:self.save_settings(options_1, options_2))
-        okay.grid(row=2, column=0)
+        difficulty_label = Label(setting_window, text="Difficulty")
+        difficulty_label.grid(row=2, column=0, pady=10, padx=10)
+        difficulty_options = ttk.Combobox(setting_window, state="readonly",
+                                 values=[
+                                     "Easy",
+                                     "Medium",
+                                     "Hard",
+                                 ])
+        difficulty_options.grid(row=2, column=1)
 
-    def save_settings(self,options_1, options_2):
-        parser["settings"]["Goat"] = options_1.get()
-        parser["settings"]["Tiger"] = options_2.get()
+        difficulty_current = parser.get("settings", "difficulty")
+        selected = dict(difficulty_options)['values'].index(difficulty_current)
+        difficulty_options.current(selected)
+
+        okay = Button(setting_window, text="Save", command=lambda:self.save_settings(options_1, options_2, difficulty_options))
+        okay.grid(row=3, column=0)
+
+    def save_settings(self,options_1, options_2, difficulty_options):
+        parser["settings"]["goat"] = options_1.get()
+        parser["settings"]["tiger"] = options_2.get()
+        parser["settings"]["difficulty"] = difficulty_options.get()
 
         with open("settings.conf", "w") as f:
             parser.write(f)

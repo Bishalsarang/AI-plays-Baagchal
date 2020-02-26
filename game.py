@@ -24,6 +24,9 @@ class Game(object):
         self.player_1 = Player("Goat", parser.get("settings", "Goat"))
         self.player_2 = Player("Tiger", parser.get("settings", "Tiger"))
 
+        self.depth = 4
+        self.set_difficulty()
+
         self.ai = None
         self.role = dict()
         self.role["Goat"] = "Human"
@@ -38,9 +41,17 @@ class Game(object):
         self.grid = None
         self.board_init()
 
+    def set_difficulty(self):
+        if parser.get("settings", "difficulty") == "Medium":
+            self.depth = 4
+        elif parser.get("settings", "difficulty") == "Hard":
+            self.depth = 5
+        else:
+            self.depth = 3
+
     def reload_config(self):
-        self.player_1 = Player("Goat", parser.get("settings", "Goat"))
-        self.player_2 = Player("Tiger", parser.get("settings", "Tiger"))
+        self.player_1 = Player("Goat", parser.get("settings", "goat"))
+        self.player_2 = Player("Tiger", parser.get("settings", "tiger"))
 
     @classmethod
     def reset(cls):
