@@ -5,6 +5,7 @@ This file contains implementation of AI agent that uses minimax algorithm to fin
 from collections import namedtuple
 from utilities import  x_not_equals_y_operations, x_equals_y_operations, is_inside_board, is_game_over
 import random
+from datetime import  datetime
 from copy import deepcopy
 
 Move = namedtuple("Move", "type frm to inter")
@@ -53,11 +54,9 @@ class Agent(object):
 
     def evaluate(self, depth=0):
         winner = is_game_over(self.board, self.dead_goats)
-        # return 1.5 * board.baghs_trapped - 1.2 * board.goats_captured
         if not winner[0]:
-             # return 300 * self.number_of_movable_tigers() + 700 * self.dead_goats - 700 * self.number_of_closed_spaces() - depth
-
-             return 5 * self.number_of_movable_tigers() + 50 * self.dead_goats + 15 * self.number_of_goats_that_can_be_captured() - depth
+             random.seed(datetime.now())
+             return 5 * self.number_of_movable_tigers() + 50 * self.dead_goats + 15 * self.number_of_goats_that_can_be_captured() - random.random()
             # return depth
 
         if winner[1] == "Goat":

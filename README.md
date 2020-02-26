@@ -22,7 +22,8 @@ or, alternatively:
  - [x] Map GUI to grid
  - [x] Add constraints for moves
  - [x] Minimal working version for 2 players
- - [ ] Add Controls
+ - [x] Add Controls
  - [x] Implement AI: minimax
+ - [x] Randomize optimal moves
  - [ ] Improve Heuristic function
  - [ ] Rework on the messy code
