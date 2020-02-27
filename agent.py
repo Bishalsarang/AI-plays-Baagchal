@@ -217,6 +217,8 @@ class Agent(object):
                 current_value = self.minimax(True, depth + 1, alpha, beta)
                 beta = min(beta, current_value)
 
+                if current_value == value and depth == 0:
+                    self.best_move = move
                 if current_value < value:
 
                     value = current_value
@@ -234,6 +236,9 @@ class Agent(object):
             for move in self.generate_move_list(is_max):
                 self.make_move(move, is_max)
                 current_value = self.minimax(False, depth + 1, alpha, beta)
+                alpha = max(alpha, value)
+                if current_value == value and depth == 0:
+                    self.best_move = move
                 if current_value > value:
 
                     value = current_value

@@ -14,7 +14,7 @@ or, alternatively:
 ``python gui.py``
   
 ## Screenshots
-  ![enter image description here](https://raw.githubusercontent.com/sarangbishal/AI-plays-Baagchal/master/images/screenshots/sc1.JPG)
+  ![enter image description here](https://raw.githubusercontent.com/Bishalsarang/AI-plays-Baagchal/master/images/screenshots/sc1.JPG)
   
 ## TO DOS:
 
