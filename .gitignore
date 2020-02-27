@@ -7,7 +7,7 @@ build
 dist
 gui.spec
 tk_gui.py
-
+output
 test.py
 
 # Byte-compiled / optimized / DLL files

@@ -13,7 +13,7 @@ from configparser import ConfigParser
 
 
 parser = ConfigParser()
-parser.read("settings.conf")
+
 
 Move = namedtuple("Move", "x y")
 
@@ -24,6 +24,7 @@ class UI(object):
 
         # Initilize path to images sounds and assets
         self.assets = Assets()
+        parser.read(self.assets.configuration_path)
 
         self.blank_img = PhotoImage(file=self.assets.blank_image_path)
         self.tiger_img = PhotoImage(file=self.assets.tiger_image_path)
@@ -361,7 +362,7 @@ class UI(object):
         parser["settings"]["tiger"] = options_2.get()
         parser["settings"]["difficulty"] = difficulty_options.get()
 
-        with open("settings.conf", "w") as f:
+        with open(self.assets.configuration_path, "w") as f:
             parser.write(f)
         messagebox.showinfo("Settings saved. ", "Settings updated. Restart to apply the changes")
 

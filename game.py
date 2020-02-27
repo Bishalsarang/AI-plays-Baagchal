@@ -1,14 +1,14 @@
-# Author: Bishal Saran
+# Author: Bishal Sarang
 """
 This file contains all the game states like board config, goats_in_hand, goats_killed, current_turn etc
 """
 from utilities import can_move
 from collections import namedtuple
 from configparser import  ConfigParser
-
+from assets import Assets
 
 parser = ConfigParser()
-parser.read("settings.conf")
+
 
 Player = namedtuple("Player", "role type")
 
@@ -16,6 +16,8 @@ INF = float("inf")
 
 class Game(object):
     def __init__(self):
+        self.asset = Assets()
+        parser.read(self.asset.configuration_path)
         self.current_turn = 'Goat'
         self.winner = None
         self.goats_in_hand = 20

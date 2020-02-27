@@ -1,18 +1,24 @@
 # AI-plays-Baagchal  
 In this repository, I'll be writing an AI to play Baagchal using minimax algorithm.  
   
-## Installation
+
+## Usage
+If you directly want to run the executable file without worrying about installing python and installing configparser, the windows version is available in [release](https://github.com/Bishalsarang/AI-plays-Baagchal/releases) for downloads.
+ 
+ Alternatively,
+ 
+#### Installation
 ``configparser`` is the only dependencies other than tkinter.
 
 ``pip install configparser``
 
 or, alternatively:
 
-``pip install -r requirements.txt``
+``pip install -r requirements.txt`` 
 
-## Usage
 ``python gui.py``
-  
+
+
 ## Screenshots
   ![enter image description here](https://raw.githubusercontent.com/Bishalsarang/AI-plays-Baagchal/master/images/screenshots/sc1.JPG)
   
